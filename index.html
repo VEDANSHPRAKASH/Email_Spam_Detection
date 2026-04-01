@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Spam Detector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: #1e2d42;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --danger: #ff4560;
+      --safe: #00e096;
+      --warning: #ffa94d;
+      --text: #e2e8f0;
+      --text-dim: #64748b;
+      --text-muted: #374151;
+      --glow: rgba(0, 229, 255, 0.12);
+      --glow-danger: rgba(255, 69, 96, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.3;
+      z-index: 0;
+      animation: gridPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.15; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 56px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px var(--glow);
+    }
+
+    .logo-text h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, var(--accent), var(--text));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(0, 224, 150, 0.08);
+      border: 1px solid rgba(0, 224, 150, 0.2);
+      border-radius: 100px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--safe);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--safe);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* ===== MAIN GRID ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* ===== PANELS ===== */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.5;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* ===== INPUT AREA ===== */
+    .input-section label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 200px;
+      line-height: 1.7;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+
+    textarea::placeholder { color: var(--text-muted); }
+
+    .input-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .char-count {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+    }
+
+    .model-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .model-select-wrap label {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 28px 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    select option { background: var(--surface); }
+
+    /* ===== ANALYZE BUTTON ===== */
+    .btn-analyze {
+      width: 100%;
+      padding: 15px 24px;
+      background: linear-gradient(135deg, var(--accent), #0084ff);
+      border: none;
+      border-radius: 10px;
+      color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-analyze::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, white, transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn-analyze:hover::before { opacity: 0.1; }
+    .btn-analyze:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,229,255,0.3); }
+    .btn-analyze:active { transform: translateY(0); }
+    .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-clear {
+      width: 100%;
+      padding: 11px 24px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-dim);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-clear:hover { border-color: var(--text-dim); color: var(--text); }
+
+    /* ===== RESULT PANEL ===== */
+    .result-display {
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .verdict-card {
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid transparent;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .verdict-card.spam {
+      background: linear-gradient(135deg, rgba(255,69,96,0.12), rgba(255,69,96,0.05));
+      border-color: rgba(255,69,96,0.3);
+      box-shadow: 0 0 40px rgba(255,69,96,0.1);
+    }
+
+    .verdict-card.ham {
+      background: linear-gradient(135deg, rgba(0,224,150,0.12), rgba(0,224,150,0.05));
+      border-color: rgba(0,224,150,0.3);
+      box-shadow: 0 0 40px rgba(0,224,150,0.1);
+    }
+
+    .verdict-icon {
+      font-size: 42px;
+      display: block;
+      margin-bottom: 10px;
+      animation: iconBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes iconBounce {
+      0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .verdict-label {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: block;
+    }
+
+    .verdict-card.spam .verdict-label { color: var(--danger); }
+    .verdict-card.ham .verdict-label { color: var(--safe); }
+
+    .verdict-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 4px;
+    }
+
+    /* ===== CONFIDENCE BAR ===== */
+    .conf-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .conf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .conf-label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .conf-value { color: var(--text); font-weight: 600; }
+
+    .progress-track {
+      background: var(--surface2);
+      border-radius: 100px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .progress-fill.danger { background: linear-gradient(90deg, var(--danger), #ff6b84); }
+    .progress-fill.safe { background: linear-gradient(90deg, var(--safe), #4fffbc); }
+
+    /* ===== INDICATORS ===== */
+    .indicators-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .indicator-tag {
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 10.5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      background: rgba(255,165,77,0.1);
+      border: 1px solid rgba(255,165,77,0.25);
+      color: var(--warning);
+    }
+
+    .no-result-msg {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      gap: 12px;
+    }
+
+    .no-result-msg .icon { font-size: 36px; opacity: 0.4; }
+    .no-result-msg p { font-size: 13px; line-height: 1.6; max-width: 220px; }
+
+    /* ===== STATS ROW ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 20px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--text);
+    }
+
+    .stat-value .unit {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-dim);
+      letter-spacing: 0;
+    }
+
+    .stat-change {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 4px;
+    }
+
+    .stat-change.up { color: var(--safe); }
+    .stat-change.neutral { color: var(--text-dim); }
+
+    .stat-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0.4;
+    }
+
+    /* ===== MODEL COMPARISON TABLE ===== */
+    .models-table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--surface2);
+      color: var(--text-dim);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 10px;
+    }
+
+    th:first-child { border-radius: 8px 0 0 8px; }
+    th:last-child { border-radius: 0 8px 8px 0; }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr.best-model td { color: var(--accent); }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge-best {
+      background: rgba(0,229,255,0.12);
+      border: 1px solid rgba(0,229,255,0.3);
+      color: var(--accent);
+    }
+
+    .loading-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 20px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== QUICK TESTS ===== */
+    .quick-tests {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .quick-test-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .quick-btn {
+      padding: 6px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .quick-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--glow);
+    }
+
+    .quick-btn.spam-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--glow-danger);
+    }
+
+    /* ===== HIDDEN/VISIBLE ===== */
+    .hidden { display: none !important; }
+
+    /* ===== BATCH SECTION ===== */
+    .batch-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+
+    .batch-textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.8;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .batch-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+
+    .batch-results {
+      margin-top: 16px;
+    }
+
+    .batch-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      gap: 12px;
+    }
+
+    .batch-item-text { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .batch-item-verdict { font-weight: 700; white-space: nowrap; }
+    .batch-item-verdict.spam { color: var(--danger); }
+    .batch-item-verdict.ham { color: var(--safe); }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    footer a { color: var(--text-dim); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 820px) {
+      .grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      header { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-text">
+        <h1>Spam Detector AI</h1>
+        <p>Spam Email Detector Platform</p>
+      </div>
+    </div>
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      <span id="status-text">Loading model...</span>
+    </div>
+  </header>
+
+  <!-- STATS ROW -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Accuracy</div>
+      <div class="stat-value" id="stat-accuracy">—<span class="unit">%</span></div>
+      <div class="stat-change neutral" id="stat-model-name">Loading...</div>
+      <div class="stat-accent-bar"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">F1 Score</div>
+      <div class="stat-value" id="stat-f1">—</div>
+      <div class="stat-change up">↑ Weighted avg</div>
+      <div class="stat-accent-bar" style="background:linear-gradient(90deg,var(--safe),transparent);"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ROC-AUC</div>
+      <div class="stat-value" id="stat-auc">—</div>
+      <div class="stat-change up">↑ Binary classification</div>
+      <div class="stat-accent-bar" style="background:linear-gradient(90deg,var(--accent2),transparent);"></div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid">
+    <!-- LEFT: Input -->
+    <div class="panel">
+      <div class="panel-title">Email Content Analyzer</div>
+
+      <div class="input-section">
+        <label>Email body / SMS text</label>
+        <textarea id="email-input" placeholder="Paste an email or SMS here to check if it is spam...&#10;&#10;Example: 'You have won a FREE prize! Click here to claim now!'"></textarea>
+      </div>
+
+      <div class="input-meta">
+        <span class="char-count"><span id="char-counter">0</span> / 5000 chars</span>
+        <div class="model-select-wrap">
+          <label>Model</label>
+          <select id="model-select">
+            <option value="">Best (Auto)</option>
+            <option value="Naive Bayes">Naive Bayes</option>
+            <option value="Logistic Regression">Logistic Regression</option>
+            <option value="SVM">SVM</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-analyze" id="analyze-btn" onclick="analyzeEmail()">
+        ⚡ Analyze Email
+      </button>
+      <button class="btn-clear" onclick="clearInput()">Clear</button>
+
+      <!-- Quick test buttons -->
+      <div class="quick-tests">
+        <span class="quick-test-label">Quick tests</span>
+        <button class="quick-btn spam-btn" onclick="loadSample('spam1')">💰 Prize spam</button>
+        <button class="quick-btn spam-btn" onclick="loadSample('spam2')">🚨 Phishing</button>
+        <button class="quick-btn spam-btn" onclick="loadSample('spam3')">💊 Product spam</button>
+        <button class="quick-btn" onclick="loadSample('ham1')">📅 Normal meeting</button>
+        <button class="quick-btn" onclick="loadSample('ham2')">👋 Personal text</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Result -->
+    <div class="panel">
+      <div class="panel-title">Detection Result</div>
+      <div class="result-display">
+
+        <!-- Empty state -->
+        <div id="empty-state" class="no-result-msg">
+          <span class="icon">🔍</span>
+          <p>Paste an email on the left and click Analyze to see the prediction</p>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loading-state" class="loading-state hidden">
+          <div class="spinner"></div>
+          <span>Analyzing...</span>
+        </div>
+
+        <!-- Result state -->
+        <div id="result-state" class="hidden">
+          <div class="verdict-card" id="verdict-card">
+            <span class="verdict-icon" id="verdict-icon">❓</span>
+            <span class="verdict-label" id="verdict-label">—</span>
+            <div class="verdict-sub" id="verdict-sub">—</div>
+          </div>
+
+          <div class="conf-row">
+            <div class="conf-header">
+              <span class="conf-label">Spam probability</span>
+              <span class="conf-value" id="spam-prob-text">—</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill danger" id="spam-bar" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="conf-row">
+            <div class="conf-header">
+              <span class="conf-label">Ham probability</span>
+              <span class="conf-value" id="ham-prob-text">—</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill safe" id="ham-bar" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div id="indicators-section">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:8px;">
+              Spam Indicators
+            </div>
+            <div class="indicators-list" id="indicators-list"></div>
+            <div id="no-indicators" class="hidden" style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">
+              No spam indicators detected
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODEL COMPARISON TABLE -->
+  <div class="panel" style="margin-bottom:24px;">
+    <div class="panel-title">Model Comparison</div>
+    <div class="models-table-wrap">
+      <div id="models-loading" class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading model metrics...</span>
+      </div>
+      <table id="models-table" class="hidden">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Accuracy</th>
+            <th>Precision</th>
+            <th>Recall</th>
+            <th>F1 Score</th>
+            <th>ROC-AUC</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="models-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BATCH ANALYZER -->
+  <div class="batch-section">
+    <div class="panel-title">Batch Analyzer</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace;">
+      Enter one email per line to analyze multiple messages at once
+    </div>
+    <textarea class="batch-textarea" id="batch-input"
+      placeholder="FREE cash prize! Click now!&#10;Hey can we reschedule our meeting?&#10;URGENT: Your account has been compromised, verify now!&#10;Happy birthday! Hope you have a great day">
+    </textarea>
+    <button class="btn-analyze" style="max-width:200px;" onclick="runBatch()">
+      ⚡ Analyze Batch
+    </button>
+    <div class="batch-results" id="batch-results"></div>
+  </div>
+
+  <footer>
+    Spam Detector AI &nbsp;·&nbsp; Built with Flask + scikit-learn &nbsp;·&nbsp;
+    Model: TF-IDF + Multinomial NB / Logistic Regression / SVM &nbsp;·&nbsp;
+    <a href="#" onclick="fetchModels()">Refresh Metrics</a>
+  </footer>
+
+</div>
+
+<script>
+  const API = 'http://localhost:5000';
+
+  const SAMPLES = {
+    spam1: 'CONGRATULATIONS! You have been selected to WIN a FREE £1000 Amazon voucher! Click here NOW before it expires: www.fakeprize.com/claim',
+    spam2: 'URGENT: Your account will be suspended in 24 hours! Verify your details immediately to avoid disruption. Reply YES or visit: http://phish-link.com/verify',
+    spam3: 'Lose 30 pounds in 30 days with our MIRACLE formula! No diet needed. 100% guaranteed results. Order now and get 80% OFF! Limited stock available!',
+    ham1: "Hi, just confirming our 3pm meeting tomorrow in conference room B. I'll bring the project files. Let me know if anything changes.",
+    ham2: "Hey! I left my charger at yours last night, any chance you could bring it to work tomorrow? No rush. Thanks!"
+  };
+
+  // Init on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchHealth();
+    fetchModels();
+
+    document.getElementById('email-input').addEventListener('input', (e) => {
+      document.getElementById('char-counter').textContent = e.target.value.length;
+    });
+  });
+
+  async function fetchHealth() {
+    try {
+      const res = await fetch(`${API}/health`);
+      const data = await res.json();
+      const statusEl = document.getElementById('status-text');
+      if (data.status === 'ok') {
+        statusEl.textContent = `Model active: ${data.best_model}`;
+      }
+    } catch (e) {
+      document.getElementById('status-text').textContent = 'Backend offline';
+    }
+  }
+
+  async function fetchModels() {
+    try {
+      const res = await fetch(`${API}/api/models`);
+      const data = await res.json();
+
+      const bestModel = data.best_model;
+      const metrics = data.models;
+
+      // Update stat cards
+      const bestMetrics = metrics[bestModel];
+      if (bestMetrics) {
+        document.getElementById('stat-accuracy').innerHTML =
+          `${(bestMetrics.accuracy * 100).toFixed(1)}<span class="unit">%</span>`;
+        document.getElementById('stat-f1').textContent =
+          bestMetrics.f1_score.toFixed(4);
+        document.getElementById('stat-auc').textContent =
+          bestMetrics.roc_auc.toFixed(4);
+        document.getElementById('stat-model-name').textContent = bestModel;
+      }
+
+      // Populate table
+      const tbody = document.getElementById('models-tbody');
+      tbody.innerHTML = '';
+
+      Object.entries(metrics).forEach(([name, m]) => {
+        const isBest = name === bestModel;
+        const row = document.createElement('tr');
+        if (isBest) row.classList.add('best-model');
+        row.innerHTML = `
+          <td>${name}</td>
+          <td>${(m.accuracy * 100).toFixed(2)}%</td>
+          <td>${(m.precision * 100).toFixed(2)}%</td>
+          <td>${(m.recall * 100).toFixed(2)}%</td>
+          <td>${m.f1_score.toFixed(4)}</td>
+          <td>${m.roc_auc.toFixed(4)}</td>
+          <td>${isBest ? '<span class="badge badge-best">BEST</span>' : ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('models-loading').classList.add('hidden');
+      document.getElementById('models-table').classList.remove('hidden');
+
+    } catch (e) {
+      document.getElementById('models-loading').innerHTML =
+        `<span style="color:var(--danger);font-size:12px;">⚠ Could not load metrics. Is the backend running?</span>`;
+    }
+  }
+
+  async function analyzeEmail() {
+    const text = document.getElementById('email-input').value.trim();
+    if (!text) {
+      alert('Please enter some text to analyze.');
+      return;
+    }
+
+    const btn = document.getElementById('analyze-btn');
+    const modelName = document.getElementById('model-select').value;
+
+    btn.disabled = true;
+    showLoading();
+
+    try {
+      const res = await fetch(`${API}/api/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, model: modelName || undefined })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showResult(data.result);
+      } else {
+        alert('Error: ' + data.error);
+        showEmpty();
+      }
+    } catch (e) {
+      alert('Cannot connect to backend. Make sure the Flask server is running on port 5000.');
+      showEmpty();
+    }
+
+    btn.disabled = false;
+  }
+
+  function showLoading() {
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('result-state').classList.add('hidden');
+    document.getElementById('loading-state').classList.remove('hidden');
+  }
+
+  function showEmpty() {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('result-state').classList.add('hidden');
+    document.getElementById('empty-state').classList.remove('hidden');
+  }
+
+  function showResult(result) {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('result-state').classList.remove('hidden');
+
+    const card = document.getElementById('verdict-card');
+    const icon = document.getElementById('verdict-icon');
+    const label = document.getElementById('verdict-label');
+    const sub = document.getElementById('verdict-sub');
+
+    card.className = 'verdict-card ' + (result.is_spam ? 'spam' : 'ham');
+    icon.textContent = result.is_spam ? '🚨' : '✅';
+    label.textContent = result.is_spam ? 'SPAM' : 'SAFE';
+    sub.textContent = `${result.confidence}% confidence · via ${result.model_used}`;
+
+    // Re-trigger animation
+    icon.style.animation = 'none';
+    icon.offsetHeight;
+    icon.style.animation = '';
+
+    document.getElementById('spam-prob-text').textContent = result.spam_probability + '%';
+    document.getElementById('ham-prob-text').textContent = result.ham_probability + '%';
+
+    document.getElementById('spam-bar').style.width = result.spam_probability + '%';
+    document.getElementById('ham-bar').style.width = result.ham_probability + '%';
+
+    // Indicators
+    const list = document.getElementById('indicators-list');
+    const noInd = document.getElementById('no-indicators');
+    list.innerHTML = '';
+
+    if (result.indicators && result.indicators.length > 0) {
+      noInd.classList.add('hidden');
+      result.indicators.forEach(ind => {
+        const tag = document.createElement('span');
+        tag.className = 'indicator-tag';
+        tag.textContent = `${ind.type}: ${ind.match}`;
+        list.appendChild(tag);
+      });
+    } else {
+      noInd.classList.remove('hidden');
+    }
+  }
+
+  function clearInput() {
+    document.getElementById('email-input').value = '';
+    document.getElementById('char-counter').textContent = '0';
+    showEmpty();
+  }
+
+  function loadSample(key) {
+    const text = SAMPLES[key];
+    if (text) {
+      document.getElementById('email-input').value = text;
+      document.getElementById('char-counter').textContent = text.length;
+    }
+  }
+
+  async function runBatch() {
+    const raw = document.getElementById('batch-input').value.trim();
+    if (!raw) return;
+
+    const texts = raw.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+    if (texts.length === 0) return;
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '⏳ Analyzing...';
+
+    const resultsDiv = document.getElementById('batch-results');
+    resultsDiv.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Processing ' + texts.length + ' messages...</span></div>';
+
+    try {
+      const res = await fetch(`${API}/api/batch-predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texts })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        let html = `
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-bottom:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;">
+            📊 ${data.summary.total} messages analyzed · 
+            <span style="color:var(--danger)">${data.summary.spam} spam</span> · 
+            <span style="color:var(--safe)">${data.summary.ham} ham</span> · 
+            <span>${data.summary.spam_rate}% spam rate</span>
+          </div>`;
+
+        data.results.forEach((r, i) => {
+          const textPreview = texts[i].substring(0, 80) + (texts[i].length > 80 ? '...' : '');
+          html += `
+            <div class="batch-item">
+              <span class="batch-item-text">${escapeHtml(textPreview)}</span>
+              <span class="batch-item-verdict ${r.is_spam ? 'spam' : 'ham'}">
+                ${r.is_spam ? '🚨 SPAM' : '✅ HAM'} (${r.confidence}%)
+              </span>
+            </div>`;
+        });
+
+        resultsDiv.innerHTML = html;
+      }
+    } catch (e) {
+      resultsDiv.innerHTML = '<span style="color:var(--danger);font-size:12px;">⚠ Backend not reachable</span>';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '⚡ Analyze Batch';
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
