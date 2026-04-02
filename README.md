@@ -1,6 +1,6 @@
 # 🛡️ Spam Detector AI — Full-Stack Email Spam Detector
 
-A production-ready, full-stack upgrade of the Email Spam Detection Jupyter notebook, designed to stand out on your resume at **MLC (Machine Learning Compiler/Company)** interviews.
+A production-ready, full-stack upgrade of the Email Spam Detection Jupyter notebook, designed to stand out on your resume at **MNC (Multi-National Company)** interviews.
 
 ---
 
@@ -76,13 +76,6 @@ Open `frontend/index.html` in your browser.
 }
 ```
 
----
-
-## 🏆 Upgrades from Notebook → MLC-Grade
-
-Here are **7 key upgrades** that will impress ML interviewers:
-
----
 
 ### ✅ Upgrade 1: TF-IDF with N-grams (from CountVectorizer)
 
@@ -185,19 +178,6 @@ return {
 - Batch endpoints reduce HTTP overhead dramatically
 - Shows awareness of real-world scale requirements
 
----
-
-## 🎯 What to Say in MLC Interviews
-
-**"What improvements would you make to your notebook?"**
-
-> "I converted it into a production-ready microservice. I replaced CountVectorizer with TF-IDF and bigrams, added multiple model comparison, built a preprocessing pipeline to normalize URLs and phone numbers, exposed it as a REST API with batch inference support, and added confidence scores with explainability indicators. The F1 score improved from ~0.97 to ~0.99."
-
-**"How would you scale this?"**
-
-> "I'd containerize with Docker, add Redis caching for repeated emails, deploy to Kubernetes with auto-scaling, swap scikit-learn for a BERT-based model fine-tuned on spam datasets, and integrate with a streaming system like Kafka for real-time email filtering at scale."
-
----
 
 ## 🔮 Next-Level Improvements (for advanced interviews)
 
@@ -231,4 +211,3 @@ return {
 
 ---
 
-*Built as a full-stack ML engineering showcase. Ready for production deployment.*
